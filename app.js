@@ -1,9 +1,12 @@
 const app = require("express")();
 require("./db");
+var bodyParser = require('body-parser')
 app.listen(4000,(err)=>{
     console.log(!err ? "4000" : "error");
 });
+app.use(bodyParser.urlencoded({ extended: false }))
 
+app.use(bodyParser.json());
 var mongoose = require('mongoose')
   , Schema = mongoose.Schema
   
@@ -11,7 +14,7 @@ var personSchema = Schema({
   _id     : Number,
   name    : String,
   age     : Number,
-  stories : [{ type: Schema.Types.ObjectId, ref: 'Story' }]
+  stories : [{ storyId: { type: Schema.Types.ObjectId, ref: 'Story' }, serial: Number}]
 });
 
 var storySchema = Schema({
@@ -27,8 +30,31 @@ app.post("/person", async(req,res,next)=>{
     var aaron = new Person({ _id: 4, name: 'Jharun', age: 23 });
     let person = await aaron.save();
     res.json({"success": person})
+});
+
+app.post("/person/ml/", async(req,res,next)=>{
+  var pr = new Person({ _id: req.body.id, name: req.body.name, age: req.body.age, stories: { storyId: req.body.storyId, serial: req.body.serial}});
+  let person = await pr.save();
+  res.json({"person": person});
+});
+app.get("/person/ml/", async(req,res,next)=>{
+  let person = await Person.find({_id:12}).populate({
+    path: "stories",
+    populate: {
+      path: 'storyId',
+      model: "Story",
+      //perDocumentLimit: 2,
+      options: { limit: 3, skip: 2 }
+    }
+  }).exec();
+  res.json({"person": person});
 })
 
+// ,
+// populate: {
+//   path: 'storyId',
+//   model: 'Story'
+// }
 app.post("/story", async(req,res)=>{
     var story1 = new Story({
         title: "Once upon a timex.",
