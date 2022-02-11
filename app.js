@@ -1,6 +1,7 @@
 const app = require("express")();
 require("./db");
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
+var jwt = require('jsonwebtoken');
 app.listen(4000,(err)=>{
     console.log(!err ? "4000" : "error");
 });
@@ -75,4 +76,19 @@ app.get("/person",async(req,res)=>{
 app.get("/story", async(req,res)=>{
     let story = await Story.find().populate("_creator fans");
     res.json({"body":story});
+})
+
+app.post("/login", async(req,res)=>{
+  try{
+    const token = await jwt.sign({ name: "kumol", id: "22" }, "secret", { expiresIn: 120 });
+    // , { algorithm: 'RS256' }
+    return res.json({
+      token: token
+    });
+  }catch(error){
+    console.log(error);
+    return res.json({
+      error: error
+    })
+  }
 })
